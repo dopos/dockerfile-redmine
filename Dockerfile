@@ -20,7 +20,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 		ca-certificates \
 		wget \
     nano-tiny \
-	&& rm -rf /var/lib/apt/lists/*
+		imagemagick \
+		libpq5 \
+    unzip \
+    postgresql-client \
+    \
+    bzr \
+    mercurial \
+    subversion \
+    darcs \
+    git \
+		openssh-client \
+  	&& rm -rf /var/lib/apt/lists/*
 
 # grab gosu for easy step-down from root
 ENV GOSU_VERSION 1.10
@@ -45,19 +56,6 @@ RUN set -x \
 	&& rm -r "$GNUPGHOME" /usr/local/bin/tini.asc \
 	&& chmod +x /usr/local/bin/tini \
 	&& tini -h
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-		imagemagick \
-		libpq5 \
-    unzip \
-    \
-    bzr \
-    mercurial \
-    subversion \
-    darcs \
-    git \
-		openssh-client \
-	&& rm -rf /var/lib/apt/lists/*
 
 ENV RAILS_ENV production
 WORKDIR /usr/src/redmine
