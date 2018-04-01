@@ -5,8 +5,6 @@ MAINTAINER zan@whiteants.net
 # ruby use v2.3.5 for build native_binary_support of Passenger, but Passenger supplu max ruby v2.4.2, and next down version 2.3.5
 # ruby v2.4.2. don't support Redmine v 3.4.4,  Redmine support ruby v2.3.5, 2.3.6 or 2.4.3
 
-COPY 02proxy /etc/apt/apt.conf.d/
-
 ENV PASSENGER_VERSION=5.1.12
 # this list plugins for push inside container
 ENV PLUGINS="sidebar_hide fixed_header drawio vote_on_issues wiki_lists plugin_views_revisions redmineup_tags \
@@ -17,11 +15,11 @@ ENV PLUGINS="sidebar_hide fixed_header drawio vote_on_issues wiki_lists plugin_v
 RUN groupadd -r redmine && useradd -r -g redmine -m -d /home/redmine redmine
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-		ca-certificates \
-		wget \
+    ca-certificates \
+    wget \
     nano-tiny \
-		imagemagick \
-		libpq5 \
+    imagemagick \
+    libpq5 \
     unzip \
     postgresql-client \
     \
@@ -30,8 +28,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     subversion \
     darcs \
     git \
-		openssh-client \
-  	&& rm -rf /var/lib/apt/lists/*
+    openssh-client \
+    && rm -rf /var/lib/apt/lists/*
 
 # grab gosu for easy step-down from root
 ENV GOSU_VERSION 1.10
@@ -72,12 +70,12 @@ RUN wget -O redmine.tar.gz "https://www.redmine.org/releases/redmine-${REDMINE_V
 
 #install gems for redmine, install passenger and gems for plugins
 RUN buildDeps=' \
-		gcc \
-		libmagickcore-dev \
-		libmagickwand-dev \
+	gcc \
+	libmagickcore-dev \
+	libmagickwand-dev \
     libpq-dev \
     libicu-dev \
-		make \
+	make \
     g++ \
     cmake \
     autoconf \
@@ -91,8 +89,8 @@ RUN buildDeps=' \
   && bundle lock --add-platform x86-mingw32 x64-mingw32 x86-mswin32 \
   && bundle install --without development test \
   && for adapter in postgresql; do \
-		echo "$RAILS_ENV:" > ./config/database.yml; \
-		echo "  adapter: $adapter" >> ./config/database.yml; \
+	echo "$RAILS_ENV:" > ./config/database.yml; \
+	echo "  adapter: $adapter" >> ./config/database.yml; \
     # add to Gemfile gems for required for plugins
     echo "gem 'sass', '~> 3.4.15'" >> ./Gemfile; \
     echo "gem 'copyright-header', '~> 1.0.8'" >> ./Gemfile; \
@@ -100,7 +98,7 @@ RUN buildDeps=' \
     # add to Gemfile gem for install passenger
     echo "gem 'passenger', '=$PASSENGER_VERSION'" >> ./Gemfile; \
     bundle install --no-prune --without development test; \
-		rake generate_secret_token; \
+	rake generate_secret_token; \
     cp Gemfile.lock "Gemfile.lock.${adapter}"; \
 	done \
   # config passenger
@@ -126,7 +124,7 @@ RUN buildDeps=' \
     #	wiki_lists) \
       && git clone https://github.com/tkusukawa/redmine_wiki_lists.git \
     #	plugin_views_revisions) \
-#      && git clone https://github.com/mochan-tk/redmine_plugin_views_revisions.git \
+    #&& git clone https://github.com/mochan-tk/redmine_plugin_views_revisions.git \
     #	tags) \
     #	git clone https://github.com/ixti/redmine_tags.git  ;; \
     #	zenedit) \
@@ -156,7 +154,7 @@ RUN buildDeps=' \
     #	category_tree) \
     # git clone https://github.com/bap14/redmine_category_tree.git  # original repo;
     #repo abhinand-tw patched version from issue_id
-#      && git clone  https://github.com/abhinand-tw/redmine_category_tree.git \ - don't use the plugin, if use don;t work calendar on data fields
+    # && git clone  https://github.com/abhinand-tw/redmine_category_tree.git \ - don't use the plugin, if use don;t work calendar on data fields
     #	easy_mindmup) \
       && git clone https://github.com/abhinand-tw/easy_mindmup.git \
     #	easy_wbs) \
