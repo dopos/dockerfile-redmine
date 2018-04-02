@@ -36,7 +36,7 @@ case "$1" in
 	      export REDMINE_DB_POSTGRES='postgres'
 	    fi
 
-        if [ "$REDMINE_DB_MYSQL" ]; then
+            if [ "$REDMINE_DB_MYSQL" ]; then
 	      adapter='mysql2'
 	      host="$REDMINE_DB_MYSQL"
 	      file_env 'REDMINE_DB_PORT' '3306'
@@ -108,17 +108,17 @@ case "$1" in
 	      )"
       fi
 
-	# ensure the right database adapter is active in the Gemfile.lock
-	cp "Gemfile.lock.${adapter}" Gemfile.lock
+      # ensure the right database adapter is active in the Gemfile.lock
+      cp "Gemfile.lock.${adapter}" Gemfile.lock
 
-	# install additional gems for Gemfile.local and plugins
-	bundle check || bundle install --without development test
+      # install additional gems for Gemfile.local and plugins
+      bundle check || bundle install --without development test
 
 
-     if [ ! -s config/secrets.yml ]; then
-       file_env 'REDMINE_SECRET_KEY_BASE'
-         if [ "$REDMINE_SECRET_KEY_BASE" ]; then
-          cat > 'config/secrets.yml' <<-YML
+      if [ ! -s config/secrets.yml ]; then
+        file_env 'REDMINE_SECRET_KEY_BASE'
+        if [ "$REDMINE_SECRET_KEY_BASE" ]; then
+         cat > 'config/secrets.yml' <<-YML
            $RAILS_ENV:
              secret_key_base: "$REDMINE_SECRET_KEY_BASE"
            echo "RAILS_ENV consist REDMINE_SECRET_KEY_BASE:"$RAILS_ENV
@@ -127,101 +127,101 @@ case "$1" in
           echo "rake generate secret key redmine base"
           rake generate_secret_token
           echo "rake secret complete"
-         fi
-     fi
+        fi
+      fi
 
-     #set redmine table for check, if exist - the redmine and plugins database are initializers
-     REDMINE_DB_TABLE_NAME=issue_categories
+      #set redmine table for check, if exist - the redmine and plugins database are initializers
+      REDMINE_DB_TABLE_NAME=issue_categories
 
-     #check for exist redmine database on PostgreSQL
-     PGPASSWORD=$REDMINE_DB_PASSWORD psql -h $REDMINE_DB_POSTGRES -p 5432 -U $REDMINE_DB_USERNAME -d $REDMINE_DB_DATABASE -l || db_redmine_not_exist=1
-     if [[ $db_redmine_not_exist ]] ; then
-       echo ""
-       echo "  Database for Redmine with name: "$REDMINE_DB_DATABASE" in PostgreSQL server: "$REDMINE_DB_POSTGRES" NOT exist - exit"
+      #check for exist redmine database on PostgreSQL
+      PGPASSWORD=$REDMINE_DB_PASSWORD psql -h $REDMINE_DB_POSTGRES -p 5432 -U $REDMINE_DB_USERNAME -d $REDMINE_DB_DATABASE -l || db_redmine_not_exist=1
+      if [[ $db_redmine_not_exist ]] ; then
+        echo ""
+        echo "  Database for Redmine with name: "$REDMINE_DB_DATABASE" in PostgreSQL server: "$REDMINE_DB_POSTGRES" NOT exist - exit"
+        echo " "
+        exit 1
+      else
+       echo " Database for Redmine with name: "$REDMINE_DB_DATABASE" in PostgreSQL server: "$REDMINE_DB_POSTGRES" - exist, starting Redmine"
        echo " "
-	 exit 1
-     else
-      echo " Database for Redmine with name: "$REDMINE_DB_DATABASE" in PostgreSQL server: "$REDMINE_DB_POSTGRES" - exist, starting Redmine"
-      echo " "
-     fi
-     #try to craete redmine table - check for exist table, if succsessfull, need delete the table for Redmine DB migration succsess
-     PGPASSWORD=$REDMINE_DB_PASSWORD psql -h $REDMINE_DB_POSTGRES -p 5432 -U $REDMINE_DB_USERNAME -d $REDMINE_DB_DATABASE -c "CREATE TABLE $REDMINE_DB_TABLE_NAME ( name varchar(10));" || redmine_db_table_exist=1
-     if [[ $redmine_db_table_exist ]] ; then
-      echo " Redmine table exist in "$REDMINE_DB_POSTGRES", start Redmine without init and migration database"
-      echo " "
-     else
-       echo " Redmine table not exist in "$REDMINE_DB_POSTGRES", start Redmine and Plugins migration database. Droping a test table."
+      fi
+      #try to craete redmine table - check for exist table, if succsessfull, need delete the table for Redmine DB migration succsess
+      PGPASSWORD=$REDMINE_DB_PASSWORD psql -h $REDMINE_DB_POSTGRES -p 5432 -U $REDMINE_DB_USERNAME -d $REDMINE_DB_DATABASE -c "CREATE TABLE $REDMINE_DB_TABLE_NAME ( name varchar(10));" || redmine_db_table_exist=1
+      if [[ $redmine_db_table_exist ]] ; then
+       echo " Redmine table exist in "$REDMINE_DB_POSTGRES", start Redmine without init and migration database"
+       echo " "
+      else
+        echo " Redmine table not exist in "$REDMINE_DB_POSTGRES", start Redmine and Plugins migration database. Droping a test table."
 
-      # remove table REDMINE_TABLE_NAME
-      PGPASSWORD=$REDMINE_DB_PASSWORD psql -h $REDMINE_DB_POSTGRES -p 5432 -U $REDMINE_DB_USERNAME -d $REDMINE_DB_DATABASE -c "DROP TABLE $REDMINE_DB_TABLE_NAME"
+        # remove table REDMINE_TABLE_NAME
+        PGPASSWORD=$REDMINE_DB_PASSWORD psql -h $REDMINE_DB_POSTGRES -p 5432 -U $REDMINE_DB_USERNAME -d $REDMINE_DB_DATABASE -c "DROP TABLE $REDMINE_DB_TABLE_NAME"
 
-      echo "  Clean redmine plugins directory, delete all plugins if exist, for reinstall"
-      rm -fRd plugins/*
+        echo "  Clean redmine plugins directory, delete all plugins if exist, for reinstall"
+        rm -fRd plugins/*
 
-      echo " Start redmine db migrate"
-      gosu redmine rake db:migrate
+        echo " Start redmine db migrate"
+        gosu redmine rake db:migrate
 
-      echo " Start plugins:migrate"
-      echo " List plugins will be installed: "$REDMINE_PLUGINS_LIST
-      #copy plugins from hide-plugins dir
-      for var in $REDMINE_PLUGINS_LIST ;
-        do
+        echo " Start plugins:migrate"
+        echo " List plugins will be installed: "$REDMINE_PLUGINS_LIST
+        #copy plugins from hide-plugins dir
+        for var in $REDMINE_PLUGINS_LIST ;
+         do
           echo -n $var
           cp -r hide-plugins/$var plugins && echo "- plugin copy Ok"
-        done
+         done
 
-      # install additional gems for plugins
-      echo " run bundle "
-      bundle install --local --without development test
+        # install additional gems for plugins
+        echo " run bundle "
+        bundle install --local --without development test
 
-      echo " Start rake for compile assets "
-      #	assets precompile
-      rake assets:precompile db:migrate RAILS_ENV=production RAILS_GROUPS=assets
+        echo " Start rake for compile assets "
+        #assets precompile
+        rake assets:precompile db:migrate RAILS_ENV=production RAILS_GROUPS=assets
 
-      echo " Start plugins db migrate "
-      # db migrate for redmine plugins
-      language=russian bundle exec rake redmine:plugins:migrate RAILS_ENV=production
+        echo " Start plugins db migrate "
+        # db migrate for redmine plugins
+        language=russian bundle exec rake redmine:plugins:migrate RAILS_ENV=production
 
-      echo " "
-      echo " Deploy Redmine+Plugins+Passenger complete.  Starting Passenger... "
-      echo " "
-     fi
-     #add redmine config file for emails configuration
-     # this config file will write after redmine db migrate and after plugins db migrate
-     # if write this file before migration - migration fail
-     echo "default:" > config/configuration.yml
-     echo " email_delivery:" >> config/configuration.yml
-     echo "   delivery_method: ${EMAIL_CONFIG_DELIVERY_METHOD}" >> config/configuration.yml
-     echo "   smtp_settings:" >> config/configuration.yml
-     for var in \
-       address \
-       port \
-       authentication \
-       domain \
-       user_name \
-       password \
-     ; do
-       env="EMAIL_CONFIG_${var^^}"
-       val="${!env}"
-       [ -n "$val" ] || continue
-       echo "     $var: $val" >> config/configuration.yml
-     done
+        echo " "
+        echo " Deploy Redmine+Plugins+Passenger complete.  Starting Passenger... "
+        echo " "
+      fi
+      #add redmine config file for emails configuration
+      # this config file will write after redmine db migrate and after plugins db migrate
+      # if write this file before migration - migration fail
+      echo "default:" > config/configuration.yml
+      echo " email_delivery:" >> config/configuration.yml
+      echo "   delivery_method: ${EMAIL_CONFIG_DELIVERY_METHOD}" >> config/configuration.yml
+      echo "   smtp_settings:" >> config/configuration.yml
+      for var in \
+        address \
+        port \
+        authentication \
+        domain \
+        user_name \
+        password \
+      ; do
+        env="EMAIL_CONFIG_${var^^}"
+        val="${!env}"
+        [ -n "$val" ] || continue
+        echo "     $var: $val" >> config/configuration.yml
+      done
 
-     # https://www.redmine.org/projects/redmine/wiki/RedmineInstall#Step-8-File-system-permissions
-     chown -R redmine:redmine files log public/plugin_assets
-     # directories 755, files 644:
-     chmod -R ugo-x,u+rwX,go+rX,go-w files log tmp public/plugin_assets
+      # https://www.redmine.org/projects/redmine/wiki/RedmineInstall#Step-8-File-system-permissions
+      chown -R redmine:redmine files log public/plugin_assets
+      # directories 755, files 644:
+      chmod -R ugo-x,u+rwX,go+rX,go-w files log tmp public/plugin_assets
 
-     # remove PID file to enable restarting the container
-     rm -f /usr/src/redmine/tmp/pids/server.pid
+      # remove PID file to enable restarting the container
+      rm -f /usr/src/redmine/tmp/pids/server.pid
 
-     if [ "$1" = 'passenger' ]; then
-     # Don't fear the reaper.
-     set -- tini -- "$@"
-     fi
+      if [ "$1" = 'passenger' ]; then
+      # Don't fear the reaper.
+      set -- tini -- "$@"
+      fi
 
-     set -- gosu redmine "$@"
-     ;;
+      set -- gosu redmine "$@"
+      ;;
 esac
 
 exec "$@"

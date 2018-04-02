@@ -5,7 +5,6 @@ MAINTAINER zan@whiteants.net
 # ruby use v2.3.5 for build native_binary_support of Passenger, but Passenger supplu max ruby v2.4.2, and next down version 2.3.5
 # ruby v2.4.2. don't support Redmine v 3.4.4,  Redmine support ruby v2.3.5, 2.3.6 or 2.4.3
 
-
 ENV PASSENGER_VERSION=5.1.12
 
 # add our user and group first to make sure their IDs get assigned consistently, regardless of whatever dependencies get added
@@ -67,7 +66,7 @@ RUN wget -O redmine.tar.gz "https://www.redmine.org/releases/redmine-${REDMINE_V
 
 #install gems for redmine, install passenger and gems for plugins
 RUN buildDeps=' \
-	gcc \
+    gcc \
     libmagickcore-dev \
     libmagickwand-dev \
     libpq-dev \
@@ -105,12 +104,12 @@ RUN buildDeps=' \
     && rm ./config/database.yml \
     && apt-get purge -y --auto-remove $buildDeps
 
-  # download plugins and install need gems
+    # download plugins and install need gems
 RUN set -x \
     && mkdir hide-plugins \
-# add plugins for redmine
-	&& cd plugins \
-	#	sidebar_hide) \
+    # add plugins for redmine
+    && cd plugins \
+    #	sidebar_hide) \
     && git clone https://github.com/bdemirkir/sidebar_hide.git \
     #	fixed_header) \
     && git clone https://github.com/YujiSoftware/redmine-fixed-header.git redmine_fixed_header \
@@ -124,8 +123,20 @@ RUN set -x \
     #&& git clone https://github.com/mochan-tk/redmine_plugin_views_revisions.git \
     #	tags) \
     #	git clone https://github.com/ixti/redmine_tags.git  ;; \
+    #	zenedit) \
+    && git clone https://github.com/abhinand-tw/redmine_zenedit.git \
+    # redmineup_tags  - plugin from REDMINEUP.COM
+    && git clone  https://github.com/abhinand-tw/redmineup_tags.git \
     #	theme_changer) \
     && git clone https://github.com/haru/redmine_theme_changer.git \
+    #	a_common_libs) \
+    && git clone https://github.com/abhinand-tw/a_common_libs.git \
+    #	unread_issues) \
+    && git clone https://github.com/abhinand-tw/unread_issues.git \
+    #	issue_tabs) \
+    #  && git clone https://github.com/abhinand-tw/redmine_issue_tabs.git \ disable, if use this plugin redmine show comments not correct - alway reverse order
+    #	usability) \
+    && git clone https://github.com/abhinand-tw/usability.git \
     #	user_specific_theme) \
     && git clone https://github.com/Restream/redmine_user_specific_theme.git \
     #	view_customize) \
@@ -136,9 +147,17 @@ RUN set -x \
     && git clone https://github.com/s-andy/issue_id.git \
     #	issue_todo_lists) \
     && git clone https://github.com/canidas/redmine_issue_todo_lists.git \
+    #	category_tree) \
+    # git clone https://github.com/bap14/redmine_category_tree.git  # original repo;
+    #repo abhinand-tw patched version from issue_id
+    # && git clone  https://github.com/abhinand-tw/redmine_category_tree.git \ - don't use the plugin, if use don;t work calendar on data fields
+    #	easy_mindmup) \
+    && git clone https://github.com/abhinand-tw/easy_mindmup.git \
+    #	easy_wbs) \
+    && git clone https://github.com/abhinand-tw/easy_wbs.git \
     #	redhopper) \
     && git clone https://framagit.org/infopiiaf/redhopper.git \
-# add themes for redmine
+    # add themes for redmine
     && cd ../public/themes \
     # minimalflat2
     && wget https://github.com/akabekobeko/redmine-theme-minimalflat2/releases/download/v1.3.6/minimalflat2-1.3.6.zip \
@@ -149,10 +168,16 @@ RUN set -x \
     && git clone https://github.com/makotokw/redmine-theme-gitmike.git \
     # minelab
     && git clone https://github.com/jjanusch/minelab.git \
+    # A1 theme from RedmineUP
+    && git clone https://github.com/abhinand-tw/redmine-a1-theme.git \
+    # Highrise theme from RedmineUP
+    && git clone https://github.com/abhinand-tw/redmine-highrise-theme.git \
+    # Coffee theme grom RedmineUP
+    && git clone https://github.com/abhinand-tw/redmine-coffee-theme.git \
     # Redmine Alex skin - this recomended theme for all plugins from rmplus.pro plugins: usability and Unread issues
     && git clone https://bitbucket.org/dkuk/redmine_alex_skin.git \
     && cd ../.. \
-#     && rm plugins/easy_wbs/Gemfile \
+    #     && rm plugins/easy_wbs/Gemfile \
     && bundle install --no-cache --no-prune --without development test \
     && cp -r plugins/* hide-plugins \
     && chown -R redmine:redmine hide-plugins \
