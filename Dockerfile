@@ -5,7 +5,6 @@ MAINTAINER zan@whiteants.net
 # ruby use v2.3.5 for build native_binary_support of Passenger, but Passenger supplu max ruby v2.4.2, and next down version 2.3.5
 # ruby v2.4.2. don't support Redmine v 3.4.4,  Redmine support ruby v2.3.5, 2.3.6 or 2.4.3
 
-COPY 02proxy /etc/apt/apt.conf.d/
 
 ENV PASSENGER_VERSION=5.1.12
 # this list plugins for push inside container
