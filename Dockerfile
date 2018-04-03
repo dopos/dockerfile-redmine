@@ -91,12 +91,12 @@ RUN buildDeps=' \
       echo "gem 'sass', '~> 3.4.15'" >> ./Gemfile; \
       echo "gem 'copyright-header', '~> 1.0.8'" >> ./Gemfile; \
       echo "gem 'byebug'" >> ./Gemfile; \
-      echo "gem 'multi_json'" >> ./Gemfile \
-      echo "gem 'activerecord-session_store'" >> ./Gemfile \
-      echo "gem 'liquid'" >> ./Gemfile \
-      echo "gem 'redmine_crm'" >> ./Gemfile \
-      echo "gem 'redmine_extensions'" >> ./Gemfile \
-      echo "gem 'rubyzip'" >> ./Gemfile \
+      echo "gem 'multi_json'" >> ./Gemfile; \
+      echo "gem 'activerecord-session_store'" >> ./Gemfile; \
+      echo "gem 'liquid'" >> ./Gemfile; \
+      echo "gem 'redmine_crm'" >> ./Gemfile; \
+      echo "gem 'redmine_extensions'" >> ./Gemfile; \
+      echo "gem 'rubyzip'" >> ./Gemfile; \
       # add to Gemfile gem for install passenger
       echo "gem 'passenger', '=$PASSENGER_VERSION'" >> ./Gemfile; \
       bundle install --no-prune --without development test; \
