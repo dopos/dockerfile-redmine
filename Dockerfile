@@ -115,28 +115,10 @@ RUN set -x \
     && git clone https://github.com/YujiSoftware/redmine-fixed-header.git redmine_fixed_header \
     #	drawio) \
     && git clone https://github.com/mikitex70/redmine_drawio.git \
-    #	vote_on_issues) \ - install succses but syntax error for postgres db use during work
-    #  && git clone https://github.com/ojde/redmine-vote_on_issues-plugin.git vote_on_issues \
     #	wiki_lists) \
     && git clone https://github.com/tkusukawa/redmine_wiki_lists.git \
-    #	plugin_views_revisions) \
-    #&& git clone https://github.com/mochan-tk/redmine_plugin_views_revisions.git \
-    #	tags) \
-    #	git clone https://github.com/ixti/redmine_tags.git  ;; \
-    #	zenedit) \
-    && git clone https://github.com/abhinand-tw/redmine_zenedit.git \
-    # redmineup_tags  - plugin from REDMINEUP.COM
-    && git clone  https://github.com/abhinand-tw/redmineup_tags.git \
     #	theme_changer) \
     && git clone https://github.com/haru/redmine_theme_changer.git \
-    #	a_common_libs) \
-    && git clone https://github.com/abhinand-tw/a_common_libs.git \
-    #	unread_issues) \
-    && git clone https://github.com/abhinand-tw/unread_issues.git \
-    #	issue_tabs) \
-    #  && git clone https://github.com/abhinand-tw/redmine_issue_tabs.git \ disable, if use this plugin redmine show comments not correct - alway reverse order
-    #	usability) \
-    && git clone https://github.com/abhinand-tw/usability.git \
     #	user_specific_theme) \
     && git clone https://github.com/Restream/redmine_user_specific_theme.git \
     #	view_customize) \
@@ -147,14 +129,6 @@ RUN set -x \
     && git clone https://github.com/s-andy/issue_id.git \
     #	issue_todo_lists) \
     && git clone https://github.com/canidas/redmine_issue_todo_lists.git \
-    #	category_tree) \
-    # git clone https://github.com/bap14/redmine_category_tree.git  # original repo;
-    #repo abhinand-tw patched version from issue_id
-    # && git clone  https://github.com/abhinand-tw/redmine_category_tree.git \ - don't use the plugin, if use don;t work calendar on data fields
-    #	easy_mindmup) \
-    && git clone https://github.com/abhinand-tw/easy_mindmup.git \
-    #	easy_wbs) \
-    && git clone https://github.com/abhinand-tw/easy_wbs.git \
     #	redhopper) \
     && git clone https://framagit.org/infopiiaf/redhopper.git \
     # add themes for redmine
@@ -168,12 +142,6 @@ RUN set -x \
     && git clone https://github.com/makotokw/redmine-theme-gitmike.git \
     # minelab
     && git clone https://github.com/jjanusch/minelab.git \
-    # A1 theme from RedmineUP
-    && git clone https://github.com/abhinand-tw/redmine-a1-theme.git \
-    # Highrise theme from RedmineUP
-    && git clone https://github.com/abhinand-tw/redmine-highrise-theme.git \
-    # Coffee theme grom RedmineUP
-    && git clone https://github.com/abhinand-tw/redmine-coffee-theme.git \
     # Redmine Alex skin - this recomended theme for all plugins from rmplus.pro plugins: usability and Unread issues
     && git clone https://bitbucket.org/dkuk/redmine_alex_skin.git \
     && cd ../.. \
