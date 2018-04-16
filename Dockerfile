@@ -96,7 +96,7 @@ RUN buildDeps=' \
       echo "gem 'liquid'" >> ./Gemfile; \
       echo "gem 'redmine_crm'" >> ./Gemfile; \
       echo "gem 'redmine_extensions'" >> ./Gemfile; \
-      echo "gem 'rubyzip'" >> ./Gemfile; \
+      echo "gem 'rubyzip', '>=1.0.0'" >> ./Gemfile; \
       # add to Gemfile gem for install passenger
       echo "gem 'passenger', '=$PASSENGER_VERSION'" >> ./Gemfile; \
       bundle install --no-prune --without development test; \
