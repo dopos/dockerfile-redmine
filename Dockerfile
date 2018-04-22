@@ -112,7 +112,6 @@ RUN buildDeps=' \
 
     # download plugins and install need gems
 RUN set -x \
-    && mkdir hide-plugins \
     # add plugins for redmine
     && cd plugins \
     #	sidebar_hide) \
@@ -153,15 +152,19 @@ RUN set -x \
     && cd ../.. \
     #     && rm plugins/easy_wbs/Gemfile \
     && bundle install --no-cache --no-prune --without development test \
-    && cp -r plugins/* hide-plugins \
-    && chown -R redmine:redmine hide-plugins \
-    && chown -R redmine:redmine plugins \
+    # create directories to save the data from the directories: db, plugins, tmp, public (directories themes located inside of public directories)
+    # to able to restore these directories in the host directory mounted as binmount type at the start of the container
+    && mkdir plugins-storage tmp-storage public-storage db-storage \
+    # move data to storages of directories: db, plugins, tmp, public, themes
+    #(tmp directory use for store temp data and pdf files, public use for write assets data on redmine-extensions and plugins)
+    && mv plugins/* plugins-storage \
+    && mv tmp/* tmp-storage \
+    && mv public/* public-storage \
+    && mv db/* db-storage \
     #Redmmine/wiki/RedmineInstall#Step-8-File-system-permissions
-    && chown -R redmine:redmine files log public/plugin_assets \
+    && chown -R redmine:redmine files log public plugins \
     # directories 755, files 644:
-    && chmod -R ugo-x,u+rwX,go+rX,go-w files log tmp public/plugin_assets
-
-VOLUME /usr/src/redmine/files
+    && chmod -R ugo-x,u+rwX,go+rX,go-w files log tmp public
 
 COPY docker-entrypoint.sh /
 ENTRYPOINT ["/docker-entrypoint.sh"]
