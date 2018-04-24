@@ -162,9 +162,9 @@ RUN set -x \
     && cp -r public/* public-storage \
     && cp -r db/* db-storage \
     && rm -rdf plugins/* \
-	&& rm -rdf tmp/* \
-	&& rm -rdf public/* \
-	&& rm -rdf db/* \
+    && rm -rdf tmp/* \
+    && rm -rdf public/* \
+    && rm -rdf db/* \
     #Redmmine/wiki/RedmineInstall#Step-8-File-system-permissions
     && chown -R redmine:redmine files log public plugins \
     # directories 755, files 644:
