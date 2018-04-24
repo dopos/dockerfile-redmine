@@ -157,10 +157,14 @@ RUN set -x \
     && mkdir plugins-storage tmp-storage public-storage db-storage \
     # move data to storages of directories: db, plugins, tmp, public, themes
     #(tmp directory use for store temp data and pdf files, public use for write assets data on redmine-extensions and plugins)
-    && mv plugins/* plugins-storage \
-    && mv tmp/* tmp-storage \
-    && mv public/* public-storage \
-    && mv db/* db-storage \
+    && cp -r plugins/* plugins-storage \
+    && cp -r tmp/* tmp-storage \
+    && cp -r public/* public-storage \
+    && cp -r db/* db-storage \
+    && rm -rdf plugins/* \
+	&& rm -rdf tmp/* \
+	&& rm -rdf public/* \
+	&& rm -rdf db/* \
     #Redmmine/wiki/RedmineInstall#Step-8-File-system-permissions
     && chown -R redmine:redmine files log public plugins \
     # directories 755, files 644:
