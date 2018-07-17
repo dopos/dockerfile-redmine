@@ -3,6 +3,31 @@
 
   Redmine v3.4.4 dockerfile for build image with plugins, themes and passenger.
 
+  Image usage variants. For manage the start of the redmine use variables:
+	REDMINE_PLUGINS_LIST - list of plugins that can be installed, if not initialized, no plugins will be installed
+	REDMINE_UPGRADE_FROM_PREV - if set, the existing database is migrated by the redmine update procedure
+
+ Managing image startup.
+  1. The initial deployment of the Redmine. Variable REDMINE_UPGRADE_FROM_PREV must be not set.
+  Steps at initial start-up:
+	 - check the availability of 'issue_categories' table in  REDMINE_DB_DATABASE
+	 - if the table in database exist, go to normal start (3)
+	 - if the table does not exist - create the database structure for Redmine
+	 - check REDMINE_PLUGINS_LIST, if not set - plugins are not install; if set -
+	   install and migrate redmine plugins from REDMINE_PLUGINS_LIST
+  2. Updating Redmine, starting with the existing database from the prevision version of the Redmine.
+  	Need set REDMINE_UPGRADE_FROM_PREV.
+	Steps at initial start-up:
+	   - if set REDMINE_UPGRADE_FROM_PREV, start upgrade Redmine procedure
+	   - check REDMINE_PLUGINS_LIST, if not set - plugins are not install; if set -
+		 install and migrate redmine plugins from REDMINE_PLUGINS_LIST
+
+  3. Normal start. REDMINE_UPGRADE_FROM_PREV must be not set.
+
+The contents of the directory are db, public, tmp, files, changes during the deployment and operation of
+the Redmine. The location of these directories is assumed on separate volumes, the contents of which are preserved
+when the containers is deleted.
+
 # List Redmine plugins
 
 ## Interface
@@ -16,10 +41,13 @@
 * [x] http://www.redmine.org/plugins/issue_id - v0.0.2
 * [x] http://www.redmine.org/plugins/redmine-fixed-header - v1.0.0
 * [x] http://www.redmine.org/plugins/redmine_drawio - v0.8.1
+* [x] http://www.redmine.org/plugins/redmine_local_avatars - v0.1.1
 
 ## Functional
 
 * [x] http://www.redmine.org/plugins/redmine_issue_todo_lists - v1.1.2
+* [x] https://www.redmine.org/plugins/redmine_code_review - v0.9.0
+* [x] https://github.com/hicknhack-software/redmine_hourglass - v1.2.0  
 
 ## Future
 
