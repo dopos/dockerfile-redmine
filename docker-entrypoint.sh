@@ -24,20 +24,11 @@ file_env() {
 }
 
 # initialization of the RM, depending on the values of the variables
-init_redmine() {
+install_plugins() {
 	# extract the plugins listed in REDMINE_PLUGINS_LIST from image, if empty - not extract any plugins
 	local redmine_plugins_list="$@"
-	#clear directory, for new installation or reinstall procedure
-	echo -n "  Clean redmine plugins directory, delete all plugins if exist, for reinstall"
-	rm -fRd plugins/* && echo "- clean Ok"
 
-	#Redmmine/wiki/RedmineInstall#Step-8-File-system-permissions
-	chown -R redmine:redmine plugins
-	# directories 755, files 644:
-	chmod -R ugo-x,u+rwX,go+rX,go-w plugins
-	echo " A list of themes that will be installed in Redmine"
-	ls -h public/themes
-
+	# install plugins
 	# switch bash to non stop run if return non zerro code
 	# need because not all plugins consist in plugins-store (private plugins not present on this image)
 	set +e
@@ -54,14 +45,16 @@ init_redmine() {
 	fi
 	# switch bash to stop mode if return non zerro code
 	set -e
+
+	#Redmmine/wiki/RedmineInstall#Step-8-File-system-permissions
+	chown -R redmine:redmine plugins
+	# directories 755, files 644:
+	chmod -R ugo-x,u+rwX,go+rX,go-w plugins
+
 	# install additional gems for plugins
 	echo " run bundle install"
 	bundle install --local --without development test
-	# create database structure or migrate structure from prevision version
-	echo " Start create redmine database structure"
-	RAILS_ENV=prod gosu redmine echo " test gosu RAILS_ENV="$RAILS_ENV
-	bundle exec rake db:migrate RAILS_ENV=production
-	# install plugins
+
 	if [[ -z $redmine_plugins_list ]]; then
 		echo "REDMINE_PLUGINS_LIST is empty, start/upgrade Redmine without any plugins"
 	else
@@ -185,8 +178,6 @@ case "$1" in
 			fi
 		fi
 
-		#set redmine table for check, if exist - the redmine and plugins database are initializers
-		REDMINE_DB_TABLE_NAME=issue_categories
 
 		#check for exist redmine database on PostgreSQL
 		PGPASSWORD=$REDMINE_DB_PASSWORD psql -h $REDMINE_DB_POSTGRES -p 5432 -U $REDMINE_DB_USERNAME -d $REDMINE_DB_DATABASE -l || db_redmine_not_exist=1
@@ -200,16 +191,26 @@ case "$1" in
 			echo " "
 	  	fi
 
+		#set redmine table for check, if exist - the redmine and plugins database are initializers
+		REDMINE_DB_TABLE_NAME=issues
 		# check for exist table - try to craete redmine table, if succsessfull, need delete the table for Redmine DB migration succsess
-		PGPASSWORD=$REDMINE_DB_PASSWORD psql -h $REDMINE_DB_POSTGRES -p 5432 -U $REDMINE_DB_USERNAME -d $REDMINE_DB_DATABASE -c "CREATE TABLE $REDMINE_DB_TABLE_NAME ( name varchar(10));" || redmine_db_table_exist=1
+		PGPASSWORD=$REDMINE_DB_PASSWORD psql -e -h $REDMINE_DB_POSTGRES -p 5432 -U $REDMINE_DB_USERNAME -d $REDMINE_DB_DATABASE -c "CREATE TABLE $REDMINE_DB_TABLE_NAME ( name varchar(10));" || redmine_db_table_exist=1
+		#check make_import table, if exist - do init procedure and copy files from files, pdf and other directory
+ 		#TODO add functionality for copy files from public directory from imported version redmine
+		PGPASSWORD=$REDMINE_DB_PASSWORD psql -e -h $REDMINE_DB_POSTGRES -p 5432 -U $REDMINE_DB_USERNAME -d $REDMINE_DB_DATABASE -c "CREATE TABLE make_import ( name varchar(10));" || make_import_db_table_exist=1
+		# drop table, for run redmine container normal mode next time
+		PGPASSWORD=$REDMINE_DB_PASSWORD psql -e -h $REDMINE_DB_POSTGRES -p 5432 -U $REDMINE_DB_USERNAME -d $REDMINE_DB_DATABASE -c "DROP TABLE make_import;"
+		# check for new deploy RM, start init derectories
 		# restore directories when use for store data when changing during use Redmine
-		if [[ -z $redmine_db_table_exist || $UPGRADE_FROM_PREV ]]; then
+		# files and tmp - the directory for store data when describe to redmine docs
+		# public consist plugin_assets, javascripts and themes - the directory also use for store data during use Redmine
+		if [[ -z $redmine_db_table_exist || $make_import_db_table_exist ]] ; then
 			#clear directory, for new installation or update procedure
-			echo -n "  Clean redmine plugins directory, delete all plugins if exist, for reinstall"
+			echo -n "Clean directory: public, tmp,db for new deploy or import existing base"
 			rm -fRd puplic/* && echo "- clean Ok"
 			rm -fRd tmp/* && echo "-clean ok"
 			rm -frd db/* && echo "-clean ok"
-			echo "Restore public tmp adn db directory from image (new deploy or update procedure)"
+			echo "Restore public tmp adn db directory from image (new deploy)"
 			cp -r public-storage/* public
 			cp -r tmp-storage/* tmp
 			cp -r db-storage/* db
@@ -219,27 +220,31 @@ case "$1" in
 			chmod -R ugo-x,u+rwX,go+rX,go-w tmp public db
 		fi
 		# init redmine and plugins
-		if [[ $redmine_db_table_exist ]] ; then
-			# Upgrade prevision version or migrate from other database system (mysql - psql or other variants)
-			if [[ $UPGRADE_FROM_PREV  ]]; then
-				echo "Starting Redmine upgrade procedure (UPGRADE_FROM_PREV is set)"
+		if [[ $redmine_db_table_exist ]]; then
+			# Redmine started with imported database from other system, need copy files from files,pdf and TODO public
+			if [[ $make_import_db_table_exist ]]; then
+				echo "Redmine starting with imported database, start copy files from files, pdf directory"
 				# restore plugins migrate
-				init_redmine "$REDMINE_PLUGINS_LIST"
+				install_plugins "$REDMINE_PLUGINS_LIST"
 				# clear the cahe and the existing sessions
 				bundle exec rake tmp:cache:clear tmp:sessions:clear RAILS_ENV=production
 				# copy files from folder /tmp/redmineprev
-				# not copy
-				gosu redmine cp -r /tmp/redmineprev/files/* files/
-				gosu redmine cp -r /tmp/redmineprev/tmp/pdf/* tmp/pdf
-				echo "Redmine upgrading procedure complete"
+				gosu redmine cp -r /tmp/redmine-import/files/* files/
+				gosu redmine cp -r /tmp/redmine-import/tmp/pdf/* tmp/pdf
+				echo "Directory: files, pdf - copy complete"
 			else
-				echo " Redmine table exist in "$REDMINE_DB_POSTGRES", UPGRADE_FROM_PREV not set, start Redmine in normal mode (without init structure database and install plugins)"
+				echo " make_import table don't exist, start Redmine in normal mode"
 			fi
 		else
-			echo " Redmine table not exist in "$REDMINE_DB_POSTGRES", start Redmine and Plugins migration database. Droping a test table."
+			echo " $REDMINE_DB_TABLE_NAME table not exist in "$REDMINE_DB_POSTGRES", deploy Redmine and Plugins migration database. Droping a test table."
 			# remove table REDMINE_DB_TABLE_NAME
 			PGPASSWORD=$REDMINE_DB_PASSWORD psql -h $REDMINE_DB_POSTGRES -p 5432 -U $REDMINE_DB_USERNAME -d $REDMINE_DB_DATABASE -c "DROP TABLE $REDMINE_DB_TABLE_NAME"
-			init_redmine "$REDMINE_PLUGINS_LIST"
+			# create database structure or migrate structure from prevision version
+			echo " Start create redmine database structure"
+			RAILS_ENV=prod gosu redmine echo " test gosu RAILS_ENV="$RAILS_ENV
+			bundle exec rake db:migrate RAILS_ENV=production
+			#install redmine plugins
+			install_plugins "$REDMINE_PLUGINS_LIST"
 		fi
 
 		echo " "
