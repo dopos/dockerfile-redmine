@@ -1,4 +1,4 @@
-FROM ruby:2.4-slim-stretch
+FROM ruby:2.4-slim-jessie
 MAINTAINER zan@whiteants.net
 
 # When using previous version (5.1.12), the Passenger write to the log about a strongly
@@ -45,7 +45,7 @@ RUN set -eux; \
 	export GNUPGHOME="$(mktemp -d)"; \
 	gpg --keyserver ha.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4; \
 	gpg --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu; \
-	gpgconf --kill all; \
+#	gpgconf --kill all; \
 	rm -r "$GNUPGHOME" /usr/local/bin/gosu.asc; \
 	chmod +x /usr/local/bin/gosu; \
 	gosu nobody true; \
@@ -58,7 +58,7 @@ RUN set -eux; \
 	export GNUPGHOME="$(mktemp -d)"; \
 	gpg --keyserver ha.pool.sks-keyservers.net --recv-keys 6380DC428747F6C393FEACA59A84159D7001A4E5; \
 	gpg --batch --verify /usr/local/bin/tini.asc /usr/local/bin/tini; \
-	gpgconf --kill all; \
+#	gpgconf --kill all; \
 	rm -r "$GNUPGHOME" /usr/local/bin/tini.asc; \
 	chmod +x /usr/local/bin/tini; \
 	tini -h; \
@@ -97,6 +97,7 @@ RUN set -eux; \
 		cmake \
 		autoconf \
 		patch \
+		libicu-dev \
 		; \
 		rm -rf /var/lib/apt/lists/*; \
 		\
@@ -117,6 +118,7 @@ RUN set -eux; \
 			echo "gem 'redmine_extensions'" >> ./Gemfile; \
 			echo "gem 'rubyzip', '>=1.0.0'" >> ./Gemfile; \
 			echo "gem 'therubyracer'" >> Gemfile; \
+			echo "gem 'slim' >> Gemfile"; \
 			# add to Gemfile gem for install passenger
 			echo "gem 'passenger', '=$PASSENGER_VERSION'" >> ./Gemfile; \
 			bundle update; \
