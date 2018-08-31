@@ -103,7 +103,7 @@ RUN set -eux; \
 		rm -rf /var/lib/apt/lists/*; \
 		\
 		# add bundle setting and updates for install plugins
-		bundle lock --add-platform x86-mingw32 x64-mingw32 x86-mswin32; \
+#		bundle lock --add-platform x86-mingw32 x64-mingw32 x86-mswin32; \
 		bundle install --without development test; \
 		for adapter in postgresql; do \
 			echo "$RAILS_ENV:" > ./config/database.yml; \
