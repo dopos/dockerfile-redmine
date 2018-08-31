@@ -98,11 +98,12 @@ RUN set -eux; \
 		autoconf \
 		patch \
 		libicu-dev \
+		vim \
 		; \
 		rm -rf /var/lib/apt/lists/*; \
 		\
-			# add bundle setting and updates for install plugins
-#			&& bundle lock --add-platform x86-mingw32 x64-mingw32 x86-mswin32 \
+		# add bundle setting and updates for install plugins
+		bundle lock --add-platform x86-mingw32 x64-mingw32 x86-mswin32; \
 		bundle install --without development test; \
 		for adapter in postgresql; do \
 			echo "$RAILS_ENV:" > ./config/database.yml; \
@@ -114,11 +115,13 @@ RUN set -eux; \
 			echo "gem 'multi_json'" >> ./Gemfile; \
 			echo "gem 'activerecord-session_store'" >> ./Gemfile; \
 			echo "gem 'liquid'" >> ./Gemfile; \
-			echo "gem 'redmine_crm'" >> ./Gemfile; \
+			echo "gem 'redmine_crm', '>= 0.0.38'" >> ./Gemfile; \
 			echo "gem 'redmine_extensions'" >> ./Gemfile; \
-			echo "gem 'rubyzip', '>=1.0.0'" >> ./Gemfile; \
+			echo "gem 'rubyzip', '>= 1.0.0'" >> ./Gemfile; \
 			echo "gem 'therubyracer'" >> Gemfile; \
-			echo "gem 'slim' >> Gemfile"; \
+			echo "gem 'slim'" >> Gemfile; \
+ 			echo "gem 'rspec-rails', '>= 3.5.2', '~> 3.5'" >> Gemfile; \
+			echo "gem 'rubycritic'" >> Gemfile; \
 			# add to Gemfile gem for install passenger
 			echo "gem 'passenger', '=$PASSENGER_VERSION'" >> ./Gemfile; \
 			bundle update; \

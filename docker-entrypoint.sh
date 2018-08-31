@@ -53,15 +53,12 @@ install_plugins() {
 
 	# install additional gems for plugins
 	echo " run bundle install"
-	bundle install --local --without development test
+	bundle install --without development test
 
 	if [[ -z $redmine_plugins_list ]]; then
 		echo "REDMINE_PLUGINS_LIST is empty, start/upgrade Redmine without any plugins"
 	else
 		echo "Installing plugins from REDMINE_PLUGINS_LIST"
-		#assets precompile for redmine
-		echo " Start precompile redmine assets "
-		bundle exec rake assets:precompile db:migrate RAILS_ENV=production RAILS_GROUPS=assets
 		# db migrate for redmine plugins
 		echo " Start plugins db migrate "
 		languge=russian	bundle exec rake redmine:plugins:migrate RAILS_ENV=production
@@ -157,27 +154,6 @@ case "$1" in
 			)"
 		fi
 
-		# ensure the right database adapter is active in the Gemfile.lock
-		cp "Gemfile.lock.${adapter}" Gemfile.lock
-
-		# install additional gems for Gemfile.local and plugins
-		bundle check || bundle install --without development test
-
-		if [ ! -s config/secrets.yml ]; then
-			file_env 'REDMINE_SECRET_KEY_BASE'
-			if [ "$REDMINE_SECRET_KEY_BASE" ]; then
-				cat > 'config/secrets.yml' <<-YML
-					$RAILS_ENV:
-			 	  	  secret_key_base: "$REDMINE_SECRET_KEY_BASE"
-				  	  echo "RAILS_ENV consist REDMINE_SECRET_KEY_BASE:"$RAILS_ENV
-				YML
-			elif [ ! -f /usr/src/redmine/config/initializers/secret_token.rb ]; then
-				echo "rake generate secret key redmine base"
-				bundle exec rake generate_secret_token
-				echo "rake secret complete"
-			fi
-		fi
-
 
 		#check for exist redmine database on PostgreSQL
 		PGPASSWORD=$REDMINE_DB_PASSWORD psql -h $REDMINE_DB_POSTGRES -p 5432 -U $REDMINE_DB_USERNAME -d $REDMINE_DB_DATABASE -l || db_redmine_not_exist=1
@@ -206,10 +182,11 @@ case "$1" in
 		# public consist plugin_assets, javascripts and themes - the directory also use for store data during use Redmine
 		if [[ -z $redmine_db_table_exist || $make_import_db_table_exist ]] ; then
 			#clear directory, for new installation or update procedure
-			echo -n "Clean directory: public, tmp,db for new deploy or import existing base"
+			echo -n "Clean directory: public, tmp,db and plugins for new deploy or import existing base"
 			rm -fRd puplic/* && echo "- clean Ok"
 			rm -fRd tmp/* && echo "-clean ok"
 			rm -frd db/* && echo "-clean ok"
+			rm -frd plugins/* && echo "-clean ok"
 			echo "Restore public tmp adn db directory from image (new deploy)"
 			cp -r public-storage/* public
 			cp -r tmp-storage/* tmp
@@ -219,6 +196,30 @@ case "$1" in
 			# directories 755, files 644:
 			chmod -R ugo-x,u+rwX,go+rX,go-w tmp public db
 		fi
+
+
+		# ensure the right database adapter is active in the Gemfile.lock
+		cp "Gemfile.lock.${adapter}" Gemfile.lock
+
+		# check for need install additional gems for Gemfile.local
+		bundle check || bundle install --without development test
+
+		# config secret token for redmine
+		if [ ! -s config/secrets.yml ]; then
+			file_env 'REDMINE_SECRET_KEY_BASE'
+			if [ "$REDMINE_SECRET_KEY_BASE" ]; then
+				cat > 'config/secrets.yml' <<-YML
+					$RAILS_ENV:
+					  secret_key_base: "$REDMINE_SECRET_KEY_BASE"
+					  echo "RAILS_ENV consist REDMINE_SECRET_KEY_BASE:"$RAILS_ENV
+				YML
+			elif [ ! -f /usr/src/redmine/config/initializers/secret_token.rb ]; then
+				echo "rake generate secret key redmine base"
+				bundle exec rake generate_secret_token
+				echo "rake secret complete"
+			fi
+		fi
+
 		# init redmine and plugins
 		if [[ $redmine_db_table_exist ]]; then
 			# Redmine started with imported database from other system, need copy files from files,pdf and TODO public
@@ -243,6 +244,9 @@ case "$1" in
 			echo " Start create redmine database structure"
 			RAILS_ENV=prod gosu redmine echo " test gosu RAILS_ENV="$RAILS_ENV
 			bundle exec rake db:migrate RAILS_ENV=production
+			#assets precompile for redmine
+			echo " Start precompile redmine assets "
+			bundle exec rake assets:precompile db:migrate RAILS_ENV=production RAILS_GROUPS=assets
 			#install redmine plugins
 			install_plugins "$REDMINE_PLUGINS_LIST"
 		fi
