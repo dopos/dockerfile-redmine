@@ -1,4 +1,4 @@
-FROM ruby:2.4-slim-jessie
+FROM ruby:2.4-slim-stretch
 MAINTAINER zan@whiteants.net
 
 # When using previous version (5.1.12), the Passenger write to the log about a strongly
@@ -31,7 +31,7 @@ RUN set -eux; \
 	apt-get update; \
 	apt-get install -y --no-install-recommends \
 		dirmngr \
-		gnupg \
+		gnupg2 \
 	; \
 	rm -rf /var/lib/apt/lists/*; \
 	\
@@ -45,7 +45,7 @@ RUN set -eux; \
 	export GNUPGHOME="$(mktemp -d)"; \
 	gpg --keyserver ha.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4; \
 	gpg --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu; \
-#	gpgconf --kill all; \
+	gpgconf --kill all; \
 	rm -r "$GNUPGHOME" /usr/local/bin/gosu.asc; \
 	chmod +x /usr/local/bin/gosu; \
 	gosu nobody true; \
@@ -58,7 +58,7 @@ RUN set -eux; \
 	export GNUPGHOME="$(mktemp -d)"; \
 	gpg --keyserver ha.pool.sks-keyservers.net --recv-keys 6380DC428747F6C393FEACA59A84159D7001A4E5; \
 	gpg --batch --verify /usr/local/bin/tini.asc /usr/local/bin/tini; \
-#	gpgconf --kill all; \
+	gpgconf --kill all; \
 	rm -r "$GNUPGHOME" /usr/local/bin/tini.asc; \
 	chmod +x /usr/local/bin/tini; \
 	tini -h; \
@@ -103,7 +103,7 @@ RUN set -eux; \
 		rm -rf /var/lib/apt/lists/*; \
 		\
 		# add bundle setting and updates for install plugins
-#		bundle lock --add-platform x86-mingw32 x64-mingw32 x86-mswin32; \
+		bundle lock --add-platform x86-mingw32 x64-mingw32 x86-mswin32; \
 		bundle install --without development test; \
 		for adapter in postgresql; do \
 			echo "$RAILS_ENV:" > ./config/database.yml; \
