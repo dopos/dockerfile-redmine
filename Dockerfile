@@ -43,7 +43,14 @@ RUN set -eux; \
 	wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch"; \
 	wget -O /usr/local/bin/gosu.asc "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch.asc"; \
 	export GNUPGHOME="$(mktemp -d)"; \
-	gpg --keyserver ha.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 ; \
+#	gpg --keyserver ha.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 ; \
+	for server in $(shuf -e ha.pool.sks-keyservers.net \
+	        				hkp://p80.pool.sks-keyservers.net:80 \
+	                        keyserver.ubuntu.com \
+	                        hkp://keyserver.ubuntu.com:80 \
+	                        pgp.mit.edu) ; do \
+		gpg --keyserver "$server" --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 && break || : ; \
+	done ; \
 	gpg --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu; \
 	gpgconf --kill all; \
 	rm -r "$GNUPGHOME" /usr/local/bin/gosu.asc; \
@@ -193,7 +200,7 @@ RUN set -x \
 	&& git clone https://github.com/hicknhack-software/redmine_hourglass \
 	# remove string - "gem 'saas'" from Gemfile, for delete dependency error version >= 0, we have saas '~> 3.4.15'
 	&& sed -i '/sass/d' redmine_hourglass/Gemfile \
-	# get swagger-ui assets for redmine_hourglass plugin (https://github.com/hicknhack-software/redmine_hourglass/issues/75)
+	# get swagger-ui - is not redmine plugins, is assets for redmine_hourglass plugin (https://github.com/hicknhack-software/redmine_hourglass/issues/75)
 	&& git clone https://github.com/swagger-api/swagger-ui.git \
 	&& cd ./swagger-ui \
 	&& git checkout v2.2.10 \
