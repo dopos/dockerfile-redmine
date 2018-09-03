@@ -63,7 +63,14 @@ RUN set -eux; \
 	wget -O /usr/local/bin/tini "https://github.com/krallin/tini/releases/download/v$TINI_VERSION/tini-$dpkgArch"; \
 	wget -O /usr/local/bin/tini.asc "https://github.com/krallin/tini/releases/download/v$TINI_VERSION/tini-$dpkgArch.asc"; \
 	export GNUPGHOME="$(mktemp -d)"; \
-	gpg --keyserver ha.pool.sks-keyservers.net --recv-keys 6380DC428747F6C393FEACA59A84159D7001A4E5 ; \
+#	gpg --keyserver ha.pool.sks-keyservers.net --recv-keys 6380DC428747F6C393FEACA59A84159D7001A4E5 ; \
+	for server in $(shuf -e ha.pool.sks-keyservers.net \
+							hkp://p80.pool.sks-keyservers.net:80 \
+							keyserver.ubuntu.com \
+							hkp://keyserver.ubuntu.com:80 \
+							pgp.mit.edu) ; do \
+		gpg --keyserver "$server" --recv-keys 6380DC428747F6C393FEACA59A84159D7001A4E5 && break || : ; \
+	done ; \
 	gpg --batch --verify /usr/local/bin/tini.asc /usr/local/bin/tini; \
 	gpgconf --kill all; \
 	rm -r "$GNUPGHOME" /usr/local/bin/tini.asc; \

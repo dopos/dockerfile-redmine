@@ -74,4 +74,4 @@ The contents of the directory are db, public, tmp, files, changes during the dep
 the Redmine. The location of these directories is assumed on separate volumes, the contents of which are preserved
 when the containers is deleted.
 
-TODO add requirements for recurring_tasks plugins 
+TODO add requirements (mesos, redmine_sidekid and others) for [recurring_tasks](https://www.redmine.org/plugins/redmine_recurring_tasks) plugins
