@@ -186,10 +186,7 @@ RUN set -x \
 	# local_avatars
 	&& git clone https://github.com/ncoders/redmine_local_avatars \
 	# recurring tasks
-	&& git clone https://github.com/nutso/redmine-plugin-recurring-tasks \
-	&& cd redmine-plugin-recurring-tasks \
-	&& git checkout v1.6.0 \
-	&& cd .. \
+	&& git clone https://github.com/centosadmin/redmine_recurring_tasks.git \
 	# redmine_banner
 	&& git clone https://github.com/akiko-pusu/redmine_banner \
 	# redmine_issue_templates

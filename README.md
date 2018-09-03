@@ -74,4 +74,4 @@ The contents of the directory are db, public, tmp, files, changes during the dep
 the Redmine. The location of these directories is assumed on separate volumes, the contents of which are preserved
 when the containers is deleted.
 
-<img src="Diagramm.svg" width="100%" height="100%">
+TODO add requirements for recurring_tasks plugins 
