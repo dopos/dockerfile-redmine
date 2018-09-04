@@ -176,8 +176,6 @@ RUN set -x \
 	&& git clone https://github.com/tkusukawa/redmine_wiki_lists.git \
 	#	theme_changer) \
 	&& git clone https://github.com/haru/redmine_theme_changer.git \
-	#	user_specific_theme) \
-	&& git clone https://github.com/Restream/redmine_user_specific_theme.git \
 	#	view_customize) \
 	&& git clone https://github.com/onozaty/redmine-view-customize.git view_customize \
 	#	wiki_extensions) \

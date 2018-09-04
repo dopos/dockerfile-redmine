@@ -16,7 +16,7 @@
   ## Interface
 
   * [x] http://www.redmine.org/plugins/redmine_theme_changer - v0.3.1
-  * [x] http://www.redmine.org/plugins/redmine_user_specific_theme - v1.2.0
+  * [x] http://www.redmine.org/plugins/redmine_user_specific_theme - v1.2.0 - remove this plugin, but duplicate function with theme_changer
   * [x] http://www.redmine.org/plugins/redmine_view_customize - v1.1.4
   * [x] http://www.redmine.org/plugins/redmine_wiki_lists - v0.0.9
   * [x] http://www.redmine.org/plugins/redmine_wiki_extensions - v0.8.1
