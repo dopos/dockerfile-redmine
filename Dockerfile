@@ -1,4 +1,4 @@
-FROM ruby:2.4-slim-stretch
+FROM ruby:2.4.10-stretch
 MAINTAINER zan@whiteants.net
 
 # When using previous version (5.1.12), the Passenger write to the log about a strongly
@@ -136,6 +136,7 @@ RUN set -eux; \
 			echo "gem 'slim'" >> Gemfile; \
  			echo "gem 'rspec-rails', '>= 3.5.2', '~> 3.5'" >> Gemfile; \
 			echo "gem 'rubycritic'" >> Gemfile; \
+			echo "gem 'bson', '>=4.8.2'" >> Gemfile; \
 			# add to Gemfile gem for install passenger
 			echo "gem 'passenger', '=$PASSENGER_VERSION'" >> ./Gemfile; \
 			bundle update; \
