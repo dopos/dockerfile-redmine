@@ -3,7 +3,7 @@ MAINTAINER zan@whiteants.net
 
 # When using previous version (5.1.12), the Passenger write to the log about a strongly
 # recomendation to upgrade the version to 5.3.3 which includes important security updates
-ENV PASSENGER_VERSION=5.3.3
+ENV PASSENGER_VERSION=6.0.0
 
 # add our user and group first to make sure their IDs get assigned consistently, regardless of whatever dependencies get added
 RUN groupadd -r redmine && useradd -r -g redmine -m -d /home/redmine redmine
@@ -39,17 +39,16 @@ RUN set -eux; \
 	\
 # grab gosu for easy step-down from root
 # https://github.com/tianon/gosu/releases
-	export GOSU_VERSION='1.10'; \
+	export GOSU_VERSION='1.11'; \
 	wget -O /usr/local/bin/gosu "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch"; \
 	wget -O /usr/local/bin/gosu.asc "https://github.com/tianon/gosu/releases/download/$GOSU_VERSION/gosu-$dpkgArch.asc"; \
 	export GNUPGHOME="$(mktemp -d)"; \
-#	gpg --keyserver ha.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 ; \
-	for server in $(shuf -e ha.pool.sks-keyservers.net \
+	for server in $(shuf -e hkp://ha.pool.sks-keyservers.net \
 	        				hkp://p80.pool.sks-keyservers.net:80 \
-	                        keyserver.ubuntu.com \
+	                        hkp://keyserver.ubuntu.com \
 	                        hkp://keyserver.ubuntu.com:80 \
-	                        pgp.mit.edu) ; do \
-		gpg --keyserver "$server" --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 && break || : ; \
+	                        hkp://pgp.mit.edu) ; do \
+		gpg --batch --keyserver "$server" --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4 && break || echo "Trying new server..."; \
 	done ; \
 	gpg --batch --verify /usr/local/bin/gosu.asc /usr/local/bin/gosu; \
 	gpgconf --kill all; \
@@ -63,13 +62,12 @@ RUN set -eux; \
 	wget -O /usr/local/bin/tini "https://github.com/krallin/tini/releases/download/v$TINI_VERSION/tini-$dpkgArch"; \
 	wget -O /usr/local/bin/tini.asc "https://github.com/krallin/tini/releases/download/v$TINI_VERSION/tini-$dpkgArch.asc"; \
 	export GNUPGHOME="$(mktemp -d)"; \
-#	gpg --keyserver ha.pool.sks-keyservers.net --recv-keys 6380DC428747F6C393FEACA59A84159D7001A4E5 ; \
-	for server in $(shuf -e ha.pool.sks-keyservers.net \
+	for server in $(shuf -e hkp://ha.pool.sks-keyservers.net \
 							hkp://p80.pool.sks-keyservers.net:80 \
-							keyserver.ubuntu.com \
+							hkp://keyserver.ubuntu.com \
 							hkp://keyserver.ubuntu.com:80 \
-							pgp.mit.edu) ; do \
-		gpg --keyserver "$server" --recv-keys 6380DC428747F6C393FEACA59A84159D7001A4E5 && break || : ; \
+							hkp://pgp.mit.edu) ; do \
+		gpg --batch --keyserver "$server" --recv-keys 6380DC428747F6C393FEACA59A84159D7001A4E5 && break || : ; \
 	done ; \
 	gpg --batch --verify /usr/local/bin/tini.asc /usr/local/bin/tini; \
 	gpgconf --kill all; \
@@ -86,8 +84,8 @@ RUN set -eux; \
 ENV RAILS_ENV production
 WORKDIR /usr/src/redmine
 
-ENV REDMINE_VERSION 3.4.6
-ENV REDMINE_DOWNLOAD_MD5 5f4993446ecf25782f469763c0d32ea1
+ENV REDMINE_VERSION 3.4.7
+ENV REDMINE_DOWNLOAD_MD5 06db1556593192856dfe155b794e8037
 
 RUN wget -O redmine.tar.gz "https://www.redmine.org/releases/redmine-${REDMINE_VERSION}.tar.gz" \
 	&& echo "$REDMINE_DOWNLOAD_MD5 redmine.tar.gz" | md5sum -c - \
@@ -138,12 +136,18 @@ RUN set -eux; \
 			echo "gem 'rubycritic'" >> Gemfile; \
 			echo "gem 'bson', '>=4.8.2'" >> Gemfile; \
 			# add to Gemfile gem for install passenger
-			echo "gem 'passenger', '=$PASSENGER_VERSION'" >> ./Gemfile; \
+			# echo "gem 'passenger', '=$PASSENGER_VERSION'" >> ./Gemfile; \
 			bundle update; \
 			bundle install --without development test; \
 		    cp Gemfile.lock "Gemfile.lock.${adapter}"; \
 			done; \
 			rm ./config/database.yml; \
+            # fix permissions for running as an arbitrary user
+            chmod -R ugo=rwX "Gemfile.lock.${adapter}"; \
+            rm -rf ~redmine/.bundle; \
+            \
+			# install passenger
+            gem install passenger --version "$PASSENGER_VERSION"; \
 			# config passenger
 			passenger-config build-native-support; \
 			passenger-config install-agent; \
@@ -169,48 +173,78 @@ RUN set -x \
 	&& cd plugins \
 	#	sidebar_hide) \
 	&& git clone https://github.com/jouve/sidebar_hide \
+#	&& rm -rdf sidebar_hide/.git \
 	#	fixed_header) \
 	&& git clone https://github.com/YujiSoftware/redmine-fixed-header.git redmine_fixed_header \
+#	&& rm -rdf redmine_fixed_header \
 	#	drawio) \
 	&& git clone https://github.com/mikitex70/redmine_drawio.git \
+#	&& rm -rdf redmine_drawio/.git \
 	#	wiki_lists) \
 	&& git clone https://github.com/tkusukawa/redmine_wiki_lists.git \
+#	&& rm -rdf redmine_wiki_lists/.git \
 	#	theme_changer) \
 	&& git clone https://github.com/haru/redmine_theme_changer.git \
+#	&& rm -rdf redmine_theme_changer \
 	#	view_customize) \
 	&& git clone https://github.com/onozaty/redmine-view-customize.git view_customize \
+#	&& rm -rdf view_customize/.git \
 	#	wiki_extensions) \
 	&& git clone https://github.com/haru/redmine_wiki_extensions.git \
+#	&& rm -rdf redmine_wiki_extensions/.git \
 	#	issue_id) \
 	&& git clone https://github.com/s-andy/issue_id.git \
+#	&& rm -rdf issue_id/.git \
 	#	issue_todo_lists) \
 	&& git clone https://github.com/canidas/redmine_issue_todo_lists.git \
+#	&& rm -rdf redmine_issue_todo_lists/.git \
 	#	redhopper) \
 	&& git clone https://framagit.org/infopiiaf/redhopper.git \
+#	&& rm -rdf redhopper/.git \
 	# code_review
 	&& git clone https://github.com/haru/redmine_code_review \
+	# for redmine 3.x need to switch on 0.9.0 version, details on plugin repo docs
+	&& cd redmine_code_review \
+	&& git checkout 0.9.0 \
+	&& rm -Rf .git \
+	&& cd .. \
 	# local_avatars
 	&& git clone https://github.com/ncoders/redmine_local_avatars \
+#	&& rm -rfd redmine_local_avatars/.git \
 	# recurring tasks
 	&& git clone https://github.com/centosadmin/redmine_recurring_tasks.git \
-	# redmine_banner
-	&& git clone https://github.com/akiko-pusu/redmine_banner \
+#	&& rm -rfd redmine_recurring_tasks/.git \
+	# redmine_postgresql_search
+	&& git clone https://github.com/jkraemer/redmine_postgresql_search.git \
+#	&& rm -rfd redmine_postgresql_search/.git \
 	# redmine_issue_templates
 	&& git clone https://github.com/akiko-pusu/redmine_issue_templates \
+#	&& rm -rdf redmine_issue_templates/.git \
+	# Redmine Document Management System Features
+	&& git clone https://github.com/danmunn/redmine_dmsf.git \
 	# Lightbox 2
 	&& git clone https://github.com/paginagmbh/redmine_lightbox2.git \
+#	&& rm -rdf redmine_lightbox2/.git \
+	# redmine_subtask_list_accordion
+	&& git clone https://github.com/GEROMAX/redmine_subtask_list_accordion.git \
+#	&& rm -rdf redmine_subtask_list_accordion \
 	# redmine_hourglass - new version of time_tracker
 	&& git clone https://github.com/hicknhack-software/redmine_hourglass \
-	# remove string - "gem 'saas'" from Gemfile, for delete dependency error version >= 0, we have saas '~> 3.4.15'
+#	&& rm -rdf redmine_hourglass \
+	## remove string - "gem 'saas'" from Gemfile, for delete dependency error version >= 0, we have saas '~> 3.4.15'
 	&& sed -i '/sass/d' redmine_hourglass/Gemfile \
-	# get swagger-ui - is not redmine plugins, is assets for redmine_hourglass plugin (https://github.com/hicknhack-software/redmine_hourglass/issues/75)
+	## get swagger-ui - is not redmine plugins, is assets for redmine_hourglass plugin (https://github.com/hicknhack-software/redmine_hourglass/issues/75)
 	&& git clone https://github.com/swagger-api/swagger-ui.git \
 	&& cd ./swagger-ui \
 	&& git checkout v2.2.10 \
 	&& cp -R ./dist ../redmine_hourglass/vendor/assets/javascripts \
-	&& rm -fR ../swagger-ui \
+#	&& rm -fR ../swagger-ui \
 	&& cd ../redmine_hourglass/vendor/assets/javascripts \
 	&& mv ./dist ./swagger-ui \
+	# remove all .git folder in plugins folder
+	&& cd /usr/src/redmine/plugins \
+	&& rm -rdfv */.git \
+	\
 	# add themes for redmine
 	&& cd /usr/src/redmine/public/themes \
 	# minimalflat2
@@ -218,13 +252,19 @@ RUN set -x \
 	&& unzip minimalflat2-1.3.6.zip \
 	# flatly_light_redmine
 	&& git clone https://github.com/Nitrino/flatly_light_redmine.git \
+#	&& rm -rdf flatly_light_redmine/.git \
 	# gitmike
 	&& git clone https://github.com/makotokw/redmine-theme-gitmike.git \
+#	&& rm -rdf redmine_theme_gitmike/.git \
 	# minelab
 	&& git clone https://github.com/jjanusch/minelab.git \
+#	&& rm -rdf minelab/.git \
 	# Redmine Alex skin - this recomended theme for all plugins from rmplus.pro plugins: usability and Unread issues
 	&& git clone https://bitbucket.org/dkuk/redmine_alex_skin.git \
+	# remove all .git folder in themes folder
+	&& rm -rdfv */.git \
 	&& cd ../.. \
+	\
 	#     && rm plugins/easy_wbs/Gemfile \
 	&& bundle install --no-cache --no-prune --without development test \
 	# create directories to save the plugins
