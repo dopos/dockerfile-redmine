@@ -51,6 +51,11 @@ install_plugins() {
 	# directories 755, files 644:
 	chmod -R ugo-x,u+rwX,go+rX,go-w plugins
 
+	#change owner, step from manual to install usability plugin (use rgloader)
+	chown -R redmine:redmine rgloader; \
+	chmod 775 -R rgloader; \
+
+
 	# install additional gems for plugins
 	echo " run bundle install"
 	bundle install --without development test
@@ -224,15 +229,13 @@ case "$1" in
 		if [[ $redmine_db_table_exist ]]; then
 			# Redmine started with imported database from other system, need copy files from files,pdf and TODO public
 			if [[ $make_import_db_table_exist ]]; then
-				echo "Redmine starting with imported database, start copy files from files, pdf directory"
+				echo "Redmine starting with imported database, start update database, copy files from files, pdf directory"
+				# update the database
+				bundle exec rake db:migrate RAILS_ENV=production
 				# restore plugins migrate
 				install_plugins "$REDMINE_PLUGINS_LIST"
 				# clear the cahe and the existing sessions
 				bundle exec rake tmp:cache:clear tmp:sessions:clear RAILS_ENV=production
-				# copy files from folder /tmp/redmineprev
-				gosu redmine cp -r /tmp/redmine-import/files/* files/
-				gosu redmine cp -r /tmp/redmine-import/tmp/pdf/* tmp/pdf
-				echo "Directory: files, pdf - copy complete"
 			else
 				echo " make_import table don't exist, start Redmine in normal mode"
 			fi
@@ -259,9 +262,9 @@ case "$1" in
 	  	# this config file will write after redmine db migrate and after plugins db migrate
 	  	# if write this file before migration - migration fail
 	  	echo "default:" > config/configuration.yml
-	  	echo " email_delivery:" >> config/configuration.yml
-		echo "   delivery_method: ${EMAIL_CONFIG_DELIVERY_METHOD}" >> config/configuration.yml
-	  	echo "   smtp_settings:" >> config/configuration.yml
+	  	echo "  email_delivery:" >> config/configuration.yml
+		echo "    delivery_method: ${EMAIL_CONFIG_DELIVERY_METHOD}" >> config/configuration.yml
+	  	echo "  smtp_settings:" >> config/configuration.yml
 	  	for var in \
 			address \
 			port \
@@ -273,7 +276,7 @@ case "$1" in
 			env="EMAIL_CONFIG_${var^^}"
 			val="${!env}"
 			[ -n "$val" ] || continue
-			echo "     $var: $val" >> config/configuration.yml
+			echo "    $var: $val" >> config/configuration.yml
 	  	done
 
 		# https://www.redmine.org/projects/redmine/wiki/RedmineInstall#Step-8-File-system-permissions
