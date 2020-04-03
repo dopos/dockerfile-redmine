@@ -288,6 +288,11 @@ RUN set -x \
 	# directories 755, files 644:
 	&& chmod -R ugo-x,u+rwX,go+rX,go-w files log tmp public
 
+# copy rgloader to root dir redmine, this is part of usability plugins for version 2.3.6 and higher
+COPY rgloader rgloader
+RUN set -x \
+	chmod 775 -R /usr/src/redmine && chown -R redmine:redmine /usr/src/redmine
+
 COPY docker-entrypoint.sh /
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
