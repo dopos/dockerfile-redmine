@@ -51,17 +51,19 @@ install_plugins() {
 	# directories 755, files 644:
 	chmod -R ugo-x,u+rwX,go+rX,go-w plugins
 
+	#change owner, step from manual to install usability plugin (use rgloader)
+	chown -R redmine:redmine rgloader; \
+	chmod 775 -R rgloader; \
+
+
 	# install additional gems for plugins
 	echo " run bundle install"
-	bundle install --local --without development test
+	bundle install --without development test
 
 	if [[ -z $redmine_plugins_list ]]; then
 		echo "REDMINE_PLUGINS_LIST is empty, start/upgrade Redmine without any plugins"
 	else
 		echo "Installing plugins from REDMINE_PLUGINS_LIST"
-		#assets precompile for redmine
-		echo " Start precompile redmine assets "
-		bundle exec rake assets:precompile db:migrate RAILS_ENV=production RAILS_GROUPS=assets
 		# db migrate for redmine plugins
 		echo " Start plugins db migrate "
 		languge=russian	bundle exec rake redmine:plugins:migrate RAILS_ENV=production
@@ -157,27 +159,6 @@ case "$1" in
 			)"
 		fi
 
-		# ensure the right database adapter is active in the Gemfile.lock
-		cp "Gemfile.lock.${adapter}" Gemfile.lock
-
-		# install additional gems for Gemfile.local and plugins
-		bundle check || bundle install --without development test
-
-		if [ ! -s config/secrets.yml ]; then
-			file_env 'REDMINE_SECRET_KEY_BASE'
-			if [ "$REDMINE_SECRET_KEY_BASE" ]; then
-				cat > 'config/secrets.yml' <<-YML
-					$RAILS_ENV:
-			 	  	  secret_key_base: "$REDMINE_SECRET_KEY_BASE"
-				  	  echo "RAILS_ENV consist REDMINE_SECRET_KEY_BASE:"$RAILS_ENV
-				YML
-			elif [ ! -f /usr/src/redmine/config/initializers/secret_token.rb ]; then
-				echo "rake generate secret key redmine base"
-				bundle exec rake generate_secret_token
-				echo "rake secret complete"
-			fi
-		fi
-
 
 		#check for exist redmine database on PostgreSQL
 		PGPASSWORD=$REDMINE_DB_PASSWORD psql -h $REDMINE_DB_POSTGRES -p 5432 -U $REDMINE_DB_USERNAME -d $REDMINE_DB_DATABASE -l || db_redmine_not_exist=1
@@ -206,10 +187,11 @@ case "$1" in
 		# public consist plugin_assets, javascripts and themes - the directory also use for store data during use Redmine
 		if [[ -z $redmine_db_table_exist || $make_import_db_table_exist ]] ; then
 			#clear directory, for new installation or update procedure
-			echo -n "Clean directory: public, tmp,db for new deploy or import existing base"
+			echo -n "Clean directory: public, tmp,db and plugins for new deploy or import existing base"
 			rm -fRd puplic/* && echo "- clean Ok"
 			rm -fRd tmp/* && echo "-clean ok"
 			rm -frd db/* && echo "-clean ok"
+			rm -frd plugins/* && echo "-clean ok"
 			echo "Restore public tmp adn db directory from image (new deploy)"
 			cp -r public-storage/* public
 			cp -r tmp-storage/* tmp
@@ -219,19 +201,41 @@ case "$1" in
 			# directories 755, files 644:
 			chmod -R ugo-x,u+rwX,go+rX,go-w tmp public db
 		fi
+
+
+		# ensure the right database adapter is active in the Gemfile.lock
+		cp "Gemfile.lock.${adapter}" Gemfile.lock
+
+		# check for need install additional gems for Gemfile.local
+		bundle check || bundle install --without development test
+
+		# config secret token for redmine
+		if [ ! -s config/secrets.yml ]; then
+			file_env 'REDMINE_SECRET_KEY_BASE'
+			if [ "$REDMINE_SECRET_KEY_BASE" ]; then
+				cat > 'config/secrets.yml' <<-YML
+					$RAILS_ENV:
+					  secret_key_base: "$REDMINE_SECRET_KEY_BASE"
+					  echo "RAILS_ENV consist REDMINE_SECRET_KEY_BASE:"$RAILS_ENV
+				YML
+			elif [ ! -f /usr/src/redmine/config/initializers/secret_token.rb ]; then
+				echo "rake generate secret key redmine base"
+				bundle exec rake generate_secret_token
+				echo "rake secret complete"
+			fi
+		fi
+
 		# init redmine and plugins
 		if [[ $redmine_db_table_exist ]]; then
 			# Redmine started with imported database from other system, need copy files from files,pdf and TODO public
 			if [[ $make_import_db_table_exist ]]; then
-				echo "Redmine starting with imported database, start copy files from files, pdf directory"
+				echo "Redmine starting with imported database, start update database, copy files from files, pdf directory"
+				# update the database
+				bundle exec rake db:migrate RAILS_ENV=production
 				# restore plugins migrate
 				install_plugins "$REDMINE_PLUGINS_LIST"
 				# clear the cahe and the existing sessions
 				bundle exec rake tmp:cache:clear tmp:sessions:clear RAILS_ENV=production
-				# copy files from folder /tmp/redmineprev
-				gosu redmine cp -r /tmp/redmine-import/files/* files/
-				gosu redmine cp -r /tmp/redmine-import/tmp/pdf/* tmp/pdf
-				echo "Directory: files, pdf - copy complete"
 			else
 				echo " make_import table don't exist, start Redmine in normal mode"
 			fi
@@ -243,6 +247,9 @@ case "$1" in
 			echo " Start create redmine database structure"
 			RAILS_ENV=prod gosu redmine echo " test gosu RAILS_ENV="$RAILS_ENV
 			bundle exec rake db:migrate RAILS_ENV=production
+			#assets precompile for redmine
+			echo " Start precompile redmine assets "
+			bundle exec rake assets:precompile db:migrate RAILS_ENV=production RAILS_GROUPS=assets
 			#install redmine plugins
 			install_plugins "$REDMINE_PLUGINS_LIST"
 		fi
@@ -255,9 +262,9 @@ case "$1" in
 	  	# this config file will write after redmine db migrate and after plugins db migrate
 	  	# if write this file before migration - migration fail
 	  	echo "default:" > config/configuration.yml
-	  	echo " email_delivery:" >> config/configuration.yml
-		echo "   delivery_method: ${EMAIL_CONFIG_DELIVERY_METHOD}" >> config/configuration.yml
-	  	echo "   smtp_settings:" >> config/configuration.yml
+	  	echo "  email_delivery:" >> config/configuration.yml
+		echo "    delivery_method: ${EMAIL_CONFIG_DELIVERY_METHOD}" >> config/configuration.yml
+	  	echo "  smtp_settings:" >> config/configuration.yml
 	  	for var in \
 			address \
 			port \
@@ -269,7 +276,7 @@ case "$1" in
 			env="EMAIL_CONFIG_${var^^}"
 			val="${!env}"
 			[ -n "$val" ] || continue
-			echo "     $var: $val" >> config/configuration.yml
+			echo "    $var: $val" >> config/configuration.yml
 	  	done
 
 		# https://www.redmine.org/projects/redmine/wiki/RedmineInstall#Step-8-File-system-permissions

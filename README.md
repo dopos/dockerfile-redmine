@@ -16,7 +16,7 @@
   ## Interface
 
   * [x] http://www.redmine.org/plugins/redmine_theme_changer - v0.3.1
-  * [x] http://www.redmine.org/plugins/redmine_user_specific_theme - v1.2.0
+  * [x] http://www.redmine.org/plugins/redmine_user_specific_theme - v1.2.0 - remove this plugin, but duplicate function with theme_changer
   * [x] http://www.redmine.org/plugins/redmine_view_customize - v1.1.4
   * [x] http://www.redmine.org/plugins/redmine_wiki_lists - v0.0.9
   * [x] http://www.redmine.org/plugins/redmine_wiki_extensions - v0.8.1
@@ -74,4 +74,4 @@ The contents of the directory are db, public, tmp, files, changes during the dep
 the Redmine. The location of these directories is assumed on separate volumes, the contents of which are preserved
 when the containers is deleted.
 
-<img src="Diagramm.svg" width="100%" height="100%">
+TODO add requirements (mesos, redmine_sidekid and others) for [recurring_tasks](https://www.redmine.org/plugins/redmine_recurring_tasks) plugins
