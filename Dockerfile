@@ -190,19 +190,15 @@ RUN set -x \
 	#	view_customize) \
 	&& git clone https://github.com/onozaty/redmine-view-customize.git view_customize \
 	&& rm -rdf view_customize/.git \
-	#	wiki_extensions) \
-	&& git clone https://github.com/haru/redmine_wiki_extensions.git \
-	&& rm -rdf redmine_wiki_extensions/.git \
 	#	issue_id) \
 	&& git clone https://github.com/s-andy/issue_id.git \
 	&& rm -rdf issue_id/.git \
 	#	issue_todo_lists) \
 	&& git clone https://github.com/canidas/redmine_issue_todo_lists.git \
 	&& rm -rdf redmine_issue_todo_lists/.git \
-	#	redhopper) \
-	&& git clone https://framagit.org/infopiiaf/redhopper.git \
-	&& cd redhopper && git checkout 1.0.11 && cd .. \
-	&& rm -rdf redhopper/.git \
+	#	redhopper (skip use if redmine upgrade to 4.x) \
+	#&& git clone https://framagit.org/infopiiaf/redhopper.git \
+	#&& rm -rdf redhopper/.git \
 	# code_review
 	&& git clone https://github.com/haru/redmine_code_review \
 	# for redmine 3.x need to switch on 0.9.0 version, details on plugin repo docs
@@ -220,14 +216,11 @@ RUN set -x \
 	# redmine_issue_templates
 	&& git clone https://github.com/akiko-pusu/redmine_issue_templates \
 	&& rm -rdf redmine_issue_templates/.git \
-	# Redmine Document Management System Features
-	&& git clone https://github.com/danmunn/redmine_dmsf.git \
+	# Redmine Document Management System Features - skip, use if Redmine upgrade to 4.1.x
+	#&& git clone https://github.com/danmunn/redmine_dmsf.git \
 	# Lightbox 2
 	&& git clone https://github.com/paginagmbh/redmine_lightbox2.git \
 	&& rm -rdf redmine_lightbox2/.git \
-	# redmine_subtask_list_accordion
-	&& git clone https://github.com/GEROMAX/redmine_subtask_list_accordion.git \
-	&& rm -rdf redmine_subtask_list_accordion/.git \
 	# redmine_hourglass - new version of time_tracker
 	&& git clone https://github.com/hicknhack-software/redmine_hourglass \
 	&& rm -rdf redmine_hourglass/.git \
